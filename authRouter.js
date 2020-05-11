@@ -1,8 +1,7 @@
 const express = require('express')
 const Users = require('./users/userModel')
 const bcrypt = require('bcrypts')
-const { validateUser } = require('./middleware/validateUser');
-
+const restrict = require('./middleware/validateUser')
 const router = express.Router();
 
 router.post('/register', async (req, res, next) => {
@@ -28,13 +27,14 @@ router.post('/login', async (req, res, next) => {
         const { username, password } = req.body
         const user = await Users.findBy({ username }).first()
 
-        const validateUser = await bcrypt.compare(password, user.password)
-        if(!user || !validateUser) {
+        const validatePswd = await bcrypt.compare(password, user.password)
+        if(!user || !validatePswd) {
             return res.status(401).json({
                 message: 'Invalid Credentials',
             })
         }
-        req.session.user = user
+        //returns a res.header of set-cookie & sets the token to a special encrypted session id
+        //req.session.user = user
         res.json({
             message: `Welcome ${user.username}`
         })
@@ -44,18 +44,18 @@ router.post('/login', async (req, res, next) => {
     }
 })
 
-router.get('/logout', validateUser(), (req, res, next) => {
-    res.session.destroy((err) => {
-        if(err) {
-            next(err)
-        } else {
-            res.json({
-                message: 'Successfully logged out'
-            })
-        }
-    }
-    )
-})
+// router.get('/logout', restrict(), (req, res, next) => {
+//     res.session.destroy((err) => {
+//         if(err) {
+//             next(err)
+//         } else {
+//             res.json({
+//                 message: 'Successfully logged out'
+//             })
+//         }
+//     }
+//     )
+// })
 
 
 module.exports = router;
